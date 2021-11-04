@@ -1,7 +1,25 @@
 <template>
   <div class="body">
     <div id="container"></div>
-    <div class="test">123</div>
+    <v-card ref="card" class="mx-auto my-12">
+      <v-card-title>Tonight's availability</v-card-title>
+
+      <v-card-text>
+        <v-chip-group active-class="deep-purple accent-4 white--text" column>
+          <v-chip>5:30PM</v-chip>
+
+          <v-chip>7:30PM</v-chip>
+
+          <v-chip>8:00PM</v-chip>
+
+          <v-chip>9:00PM</v-chip>
+        </v-chip-group>
+      </v-card-text>
+
+      <v-card-actions>
+        <v-btn color="deep-purple lighten-2" text>下个地点</v-btn>
+      </v-card-actions>
+    </v-card>
   </div>
 </template>
 
@@ -26,19 +44,19 @@ export default {
         area: ["北京市"],
         position: [116.310905, 39.992806], // 北京大学
       },
-      // {
-      //   area: ["河南省", "郑州市", "金水区"],
-      //   position: [113.660197, 34.797381], // 金水区一地方
-      // },
-      // {
-      //   area: ["河南省", "郑州市", "二七区"],
-      //   position: [113.670838, 34.723206],
-      // },
-      // {
-      //   adcode: 410307,
-      //   area: ["河南省", "洛阳市", "偃师区"],
-      //   position: [112.902364, 34.71017],
-      // },
+      {
+        area: ["河南省", "郑州市", "金水区"],
+        position: [113.660197, 34.797381], // 金水区一地方
+      },
+      {
+        area: ["河南省", "郑州市", "二七区"],
+        position: [113.670838, 34.723206],
+      },
+      {
+        adcode: 410307,
+        area: ["河南省", "洛阳市", "偃师区"],
+        position: [112.902364, 34.71017],
+      },
     ];
     let index = 0;
     // 查询区域，生成边界信息，调整合适的聚焦比例
@@ -90,16 +108,22 @@ export default {
           }
           polygons = [];
 
-          const infoWindow = new AMap.InfoWindow({
-            isCustom: true,
-            content: that.$el.querySelector(".test"),
-            // offset: new AMap.Pixel(16, -45),
-          });
-          infoWindow.open(map, item.position);
           // 五秒后跳转到下一个点（轮廓）
           setTimeout(() => {
-            resolve(infoWindow);
-          }, 5000);
+            const infoWindow = new AMap.InfoWindow({
+              isCustom: true,
+              content: that.$refs.card.$el,
+              offset: new AMap.Pixel(16, -45),
+            });
+            infoWindow.on("scroll", (e) => {
+              console.log("eee");
+              console.log(e);
+            });
+            infoWindow.open(map, item.position);
+            setTimeout(() => {
+              resolve(infoWindow);
+            }, 5000);
+          }, 3000);
         }, 2000);
       });
     }
@@ -112,9 +136,12 @@ export default {
         .then((infoWindow) => {
           index++;
           // next
+          infoWindow.close();
           if (conf[index]) {
-            infoWindow.close();
+            // infoWindow.close();
             keyframe(conf[index]);
+          } else {
+            map.setZoom(4);
           }
         });
     }
@@ -153,9 +180,5 @@ body,
 #container {
   height: 100%;
   outline: 1px solid red;
-}
-.test {
-  color: red;
-  font-weight: bold;
 }
 </style>

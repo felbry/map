@@ -4,7 +4,7 @@ module.exports = {
     node: true,
   },
   globals: {
-    AMap: 'readonly'
+    AMap: "readonly",
   },
   extends: ["plugin:vue/recommended", "eslint:recommended", "@vue/prettier"],
   parserOptions: {
