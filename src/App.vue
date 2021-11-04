@@ -1,10 +1,14 @@
 <template>
-  <div id="container"></div>
+  <div class="body">
+    <div id="container"></div>
+    <div class="test">123</div>
+  </div>
 </template>
 
 <script>
 export default {
   mounted() {
+    const that = this;
     // var position = new AMap.LngLat(116, 39); //标准写法
     const map = new AMap.Map("container", {
       zoom: 4,
@@ -22,39 +26,52 @@ export default {
         area: ["北京市"],
         position: [116.310905, 39.992806], // 北京大学
       },
-      {
-        area: ["河南省", "金水区"],
-        position: [113.660197, 34.797381], // 金水区一地方
-      },
+      // {
+      //   area: ["河南省", "郑州市", "金水区"],
+      //   position: [113.660197, 34.797381], // 金水区一地方
+      // },
+      // {
+      //   area: ["河南省", "郑州市", "二七区"],
+      //   position: [113.670838, 34.723206],
+      // },
+      // {
+      //   adcode: 410307,
+      //   area: ["河南省", "洛阳市", "偃师区"],
+      //   position: [112.902364, 34.71017],
+      // },
     ];
     let index = 0;
     // 查询区域，生成边界信息，调整合适的聚焦比例
     function step1(item) {
-      const { area } = item;
+      const { area, adcode } = item;
       return new Promise((resolve) => {
-        district.search(area[area.length - 1], function (status, result) {
-          const bounds = result.districtList[0].boundaries;
-          if (bounds) {
-            for (let i = 0, l = bounds.length; i < l; i++) {
-              polygons.push(
-                new AMap.Polygon({
-                  map: map,
-                  strokeWeight: 1,
-                  path: bounds[i],
-                  fillOpacity: 0.7,
-                  fillColor: "#CCF3FF",
-                  strokeColor: "#CC66CC",
-                })
-              );
+        district.search(
+          adcode || area[area.length - 1],
+          function (status, result) {
+            console.log(result);
+            const bounds = result.districtList[0].boundaries;
+            if (bounds) {
+              for (let i = 0, l = bounds.length; i < l; i++) {
+                polygons.push(
+                  new AMap.Polygon({
+                    map: map,
+                    strokeWeight: 1,
+                    path: bounds[i],
+                    fillOpacity: 0.7,
+                    fillColor: "#CCF3FF",
+                    strokeColor: "#CC66CC",
+                  })
+                );
+              }
+              // 地图自适应
+              map.setFitView(polygons);
+              // 两秒后加Marker
+              setTimeout(() => {
+                resolve(item);
+              }, 2000);
             }
-            // 地图自适应
-            map.setFitView(polygons);
-            // 两秒后加Marker
-            setTimeout(() => {
-              resolve(item);
-            }, 2000);
           }
-        });
+        );
       });
     }
     // 添加marker，放大至marker视角，清除轮廓
@@ -72,22 +89,31 @@ export default {
             polygons[i].setMap(null);
           }
           polygons = [];
-          // 三秒后跳转到下一个点（轮廓）
+
+          const infoWindow = new AMap.InfoWindow({
+            isCustom: true,
+            content: that.$el.querySelector(".test"),
+            // offset: new AMap.Pixel(16, -45),
+          });
+          infoWindow.open(map, item.position);
+          // 五秒后跳转到下一个点（轮廓）
           setTimeout(() => {
-            resolve();
+            resolve(infoWindow);
           }, 5000);
         }, 2000);
       });
     }
+    // eslint-disable-next-line
     function keyframe(item) {
       step1(item)
         .then((item) => {
           return step2(item);
         })
-        .then(() => {
+        .then((infoWindow) => {
           index++;
           // next
           if (conf[index]) {
+            infoWindow.close();
             keyframe(conf[index]);
           }
         });
@@ -118,7 +144,8 @@ export default {
 
 <style lang="less">
 html,
-body {
+body,
+.body {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -126,5 +153,9 @@ body {
 #container {
   height: 100%;
   outline: 1px solid red;
+}
+.test {
+  color: red;
+  font-weight: bold;
 }
 </style>
